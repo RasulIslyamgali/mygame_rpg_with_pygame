@@ -125,6 +125,15 @@ class Bullet(pygame.sprite.Sprite):
             self.kill()
 
 
+font_name = pygame.font.match_font('arial')
+
+
+def draw_text(surf, text, size, x, y):
+    font = pygame.font.Font(font_name, size)
+    text_surface = font.render(text, True, WHITE)
+    
+
+
 
 
 # создаем игру и окно
@@ -161,11 +170,14 @@ all_sprites.add(player)
 # цикл for может находится внутри цикла while, т.к. мобы создаются один раз, т.е. 8 штук
 # потом они просто будут при исчезновении заменяться новыми. т.е.
 # в один момент времени будут только 8 мобов
-for i in range(1, 8):
+# этот цикл for для создания мобов до игрового цикла
+# потом внутри игрового цикла тоже есть цикл for, чтобы добавлять новых мобов вместо умерших
+for i in range(8):
     mob = Mob()
     all_sprites.add(mob)
     mobs.add(mob)
 
+score = 0
 
 
 
@@ -209,9 +221,11 @@ while running:
     hits_bullet = pygame.sprite.groupcollide(mobs, bullets, True, True)
     # каждый убитый моб заменяется новым
     for hit in hits_bullet:
+        score += 50 - hit.radius
         m = Mob()
         all_sprites.add(m)
         mobs.add(m)
+        # print(score)
 
     # Рендеринг или простыми словами прорисовка
     screen.fill(BLACK)
