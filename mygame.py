@@ -59,6 +59,7 @@ class Player(pygame.sprite.Sprite):
         bullet = Bullet(self.rect.centerx, self.rect.top)
         all_sprites.add(bullet)
         bullets.add(bullet)
+        shoot_sound.play()
 
 
 class Mob(pygame.sprite.Sprite):
@@ -131,7 +132,11 @@ font_name = pygame.font.match_font('arial')
 def draw_text(surf, text, size, x, y):
     font = pygame.font.Font(font_name, size)
     text_surface = font.render(text, True, WHITE)
-    
+    text_rect = text_surface.get_rect()
+    text_rect.midtop = (x, y)
+    # с помощью метода blit мы рисуем новую поверхность(т.е. это не спрайт, спрайты с ним не будут взаимодействовать.
+    surf.blit(text_surface, text_rect)
+
 
 
 
@@ -149,11 +154,26 @@ clock = pygame.time.Clock()
 
 game_folder = os.path.dirname(__file__)
 img_folder = os.path.join(game_folder, 'arts')
+sound_folder = os.path.join(game_folder, 'sounds_rpg_space')
 player_img = pygame.image.load(os.path.join(img_folder, 'starship.png')).convert()
 background_img = pygame.image.load(os.path.join(img_folder, 'starfield.png')).convert()
 background_rect = background_img.get_rect()
 meteor_img = pygame.image.load(os.path.join(img_folder, 'meteorBrown_big4.png')).convert()
 bullet_img = pygame.image.load(os.path.join(img_folder, 'laserGreen10.png')).convert()
+# звуки
+# звук выстрела
+shoot_sound = pygame.mixer.Sound(os.path.join(sound_folder, 'Laser_Shoot.wav'))
+# звук фоновая музыка
+# сначала загружаем музыку
+pygame.mixer.music.load(os.path.join(sound_folder, 'BossMain.wav'))
+# устанавливаем громкость музыки, чтобы оно не перекрывало другие звуки. сейчас установлено 40% от своей
+# метод play() опубликована чуть ниже, рядом с score
+pygame.mixer.music.set_volume(0.4)
+# звуки взрывов
+explosion_sound = []
+for snd in ['Hit_Hurt.wav', 'Explosion37.wav']:
+    explosion_sound.append(pygame.mixer.Sound(os.path.join(sound_folder, snd)))
+
 meteor_list = ['meteorBrown_big1.png', 'meteorBrown_big4.png', 'meteorBrown_small2.png', 'meteorBrown_tiny1.png']
 meteor_images = []
 for img in meteor_list:
@@ -178,6 +198,11 @@ for i in range(8):
     mobs.add(mob)
 
 score = 0
+
+# включаем музыку фоновую
+# она загружена и определена выше
+# loops означает насколько часто воспроизводится песня. значение -1 повторяет музыку бесконечно
+pygame.mixer.music.play(loops=-1)
 
 
 
@@ -221,7 +246,9 @@ while running:
     hits_bullet = pygame.sprite.groupcollide(mobs, bullets, True, True)
     # каждый убитый моб заменяется новым
     for hit in hits_bullet:
+        # за каждый убитый моб присваиваются очки, чем больше мод, тем меньше score, т.к. легче попасть
         score += 50 - hit.radius
+        random.choice(explosion_sound).play()
         m = Mob()
         all_sprites.add(m)
         mobs.add(m)
@@ -231,6 +258,9 @@ while running:
     screen.fill(BLACK)
     screen.blit(background_img, background_rect)
     all_sprites.draw(screen)
+    # рисуем счет для игры
+    # получается мы рисуем буквы на нашем экране screen
+    draw_text(screen, str(score), 18, WIDTH / 2, 10)
     # После отрисовки всего, переворачиваем экран
     pygame.display.flip()
 
